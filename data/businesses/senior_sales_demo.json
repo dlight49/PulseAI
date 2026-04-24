@@ -1,0 +1,40 @@
+{
+  "business_id": "senior_sales_demo",
+  "business_name": "Luxe Glo Beauty & Spa",
+  "business_type": "service",
+  "location": "Lekki Phase 1, Lagos",
+  "hours": "Mon-Sat: 9am - 7pm",
+  "tone": "Premium, professional, yet warm and persuasive (Senior Sales Executive style)",
+  "services": [
+    {
+      "name": "Full Body Glow Treatment",
+      "price": 45000,
+      "floor_price": 38000,
+      "description": "Our signature deep exfoliation and skin brightening treatment.",
+      "value_points": ["Instant glow", "Natural organic oils", "Takes only 90 mins"]
+    },
+    {
+      "name": "Express Hydrating Facial",
+      "price": 25000,
+      "floor_price": 20000,
+      "description": "Perfect for a quick refresh before an event.",
+      "value_points": ["Deep hydration", "Reduces puffiness", "No downtime"]
+    },
+    {
+      "name": "Executive Mani-Pedi Combo",
+      "price": 15000,
+      "floor_price": 12000,
+      "description": "The ultimate grooming experience for busy professionals.",
+      "value_points": ["Premium gel polish", "Paraffin wax treatment", "Massage included"]
+    }
+  ],
+  "competitive_edge": "We use only imported organic oils from France. Our treatments are 90 mins, while others do 45 mins. We have 5-star reviews for the longest-lasting glow in Lagos.",
+  "objection_playbook": {
+    "too_expensive": "Acknowledge the cost, then pivot to the 90-min duration and premium materials. Mention that a cheap facial often causes breakouts, while ours is 100% safe.",
+    "too_far": "Remind them we offer a premium Home Service for a small extra fee, bringing the spa experience to their bedroom.",
+    "need_to_ask_husband": "Be supportive but remind them that self-care makes them a better partner. Offer to send a professional brochure they can show him."
+  },
+  "tone_rules": "Code-switch based on customer. If they use Pidgin, use Pidgin. If they are very formal, stay high-status. Never use AI words like 'delighted' or 'assistance'.",
+  "booking_enabled": true,
+  "payment_link": "https://paystack.com/pay/luxeglo-deposit"
+}

@@ -1,0 +1,108 @@
+// Pulse AI Master Schema (v1.0)
+// Optimized for 10k+ Businesses and Multi-Modal Sales Executives
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum BusinessType {
+  SERVICE
+  PRODUCT
+}
+
+enum RelationshipType {
+  LEAD
+  VIP
+  INVESTOR
+  PERSONAL_PROXY
+  ANGRY_CLIENT
+  FRIEND
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+}
+
+enum TransactionStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+model Business {
+  id                String       @id @default(uuid())
+  whatsappPhoneId   String       @unique
+  name              String
+  type              BusinessType @default(SERVICE)
+  location          String?
+  hours             String?
+  toneRules         String?
+  personaPrompt     String       @db.Text
+  competitiveEdge   String?      @db.Text
+  objectionPlaybook Json?        // Stores the negotiation logic (too_expensive, etc.)
+  paymentConfig     Json?        // Encrypted credentials for Paystack/Flutterwave
+  subscriptionActive Boolean     @default(true)
+  
+  services          Service[]
+  conversations     Conversation[]
+  transactions      Transaction[]
+  createdAt         DateTime     @default(now())
+}
+
+model Service {
+  id          String   @id @default(uuid())
+  businessId  String
+  name        String
+  price       Decimal  @db.Decimal(10, 2)
+  floorPrice  Decimal  @db.Decimal(10, 2)
+  description String?
+  valuePoints String[] // e.g. ["90 mins", "French Oils"]
+  
+  business    Business @relation(fields: [businessId], references: [id])
+}
+
+model Contact {
+  id               String           @id @default(uuid())
+  phoneNumber      String           @unique
+  displayName      String?
+  relationshipType RelationshipType @default(LEAD)
+  contextNotes     String?          @db.Text
+  goal             String?          @db.Text
+  
+  conversations    Conversation[]
+  transactions     Transaction[]
+  createdAt        DateTime         @default(now())
+}
+
+model Conversation {
+  id             String      @id @default(uuid())
+  businessId     String
+  contactId      String
+  messageBody    String      @db.Text
+  role           MessageRole
+  intentDetected String?
+  
+  business       Business    @relation(fields: [businessId], references: [id])
+  contact        Contact     @relation(fields: [contactId], references: [id])
+  createdAt      DateTime    @default(now())
+}
+
+model Transaction {
+  id             String            @id @default(uuid())
+  businessId     String
+  contactId      String
+  amount         Decimal           @db.Decimal(10, 2)
+  status         TransactionStatus @default(PENDING)
+  paymentLink    String?
+  reference      String            @unique
+  
+  business       Business          @relation(fields: [businessId], references: [id])
+  contact        Contact           @relation(fields: [contactId], references: [id])
+  createdAt      DateTime          @default(now())
+}

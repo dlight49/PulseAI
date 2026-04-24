@@ -1,0 +1,14 @@
+{
+  "business_name": "PrimeStyle Salon",
+  "business_type": "service",
+  "location": "No 4, Airport Road, Benin City, Edo State",
+  "services": [
+    {"name": "Braids", "price": 15000},
+    {"name": "Wig Install", "price": 10000},
+    {"name": "Manicure", "price": 5000}
+  ],
+  "delivery_fee": 0,
+  "hours": "9am - 7pm",
+  "tone": "friendly Nigerian tone",
+  "contact_phone": "2348000000000"
+}

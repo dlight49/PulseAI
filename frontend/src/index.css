@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@theme {
+  --color-pulse-dark: #0F172A;
+  --color-pulse-card: #1E293B;
+  --color-pulse-gold: #F1C40F;
+  --color-pulse-text: #F8FAFC;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-pulse-dark);
+  color: var(--color-pulse-text);
+}

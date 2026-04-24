@@ -1,0 +1,20 @@
+{
+  "2348000000001": {
+    "name": "Segun (Lead Investor)",
+    "type": "investor",
+    "context": "He invested in the seed round. He values speed and transparency. Always be professional but confident. Never sound desperate for money.",
+    "goal": "Keep him updated on growth metrics and maintain high-status alignment."
+  },
+  "2348000000002": {
+    "name": "Bolanle (Childhood Friend)",
+    "type": "personal",
+    "context": "Very close friend, but sometimes asks for business favors for free. Needs boundaries but stay warm.",
+    "goal": "Maintain friendship while protecting business time/resources."
+  },
+  "2348000000003": {
+    "name": "Angry Client (Mr. Okafor)",
+    "type": "business_critical",
+    "context": "He is unhappy about a delay. He is loud but valuable. Do not apologize excessively; focus on the solution and professional resolution.",
+    "goal": "De-escalate and preserve the contract."
+  }
+}

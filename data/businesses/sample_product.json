@@ -1,0 +1,15 @@
+{
+  "business_name": "Lagos Kicks",
+  "business_type": "product",
+  "location": "Lekki Phase 1, Lagos",
+  "catalog": [
+    {"name": "Nike Air Force 1", "price": 85000, "sizes": ["40", "41", "42", "43"]},
+    {"name": "Adidas Superstar", "price": 65000, "sizes": ["38", "39", "40"]},
+    {"name": "Puma Suede", "price": 55000, "sizes": ["42", "43", "44", "45"]}
+  ],
+  "delivery_fee": 3000,
+  "pickup_enabled": true,
+  "hours": "10am - 8pm",
+  "tone": "hyped, urban streetwear tone",
+  "contact_phone": "2349000000000"
+}
