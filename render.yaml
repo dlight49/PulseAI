@@ -1,0 +1,24 @@
+services:
+  # 1. The API & Webhook Service
+  - type: web
+    name: pulse-ai-backend
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn api.webhook_v2:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+
+  # 2. The AI Worker Service
+  - type: worker
+    name: pulse-ai-worker
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: celery -A core.worker worker --loglevel=info
+    envVars:
+      - key: REDIS_URL
+        sync: false
+      - key: DATABASE_URL
+        sync: false
