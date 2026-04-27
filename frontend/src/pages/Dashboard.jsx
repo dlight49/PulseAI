@@ -32,6 +32,8 @@ const Dashboard = () => {
       <div className="w-8 h-8 border-4 border-pulse-gold border-t-transparent rounded-full animate-spin"></div>
     </div>
   );
+
+  return (
     <div className="p-4 md:p-8 space-y-8 animate-in fade-in duration-500">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -107,8 +109,5 @@ const Dashboard = () => {
     </div>
   );
 };
-
-// Internal Import helper
-const MessageSquare = Users;
 
 export default Dashboard;

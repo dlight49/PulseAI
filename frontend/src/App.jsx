@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
 import BrainConfig from './pages/BrainConfig';
@@ -6,12 +6,31 @@ import ConversationVault from './pages/ConversationVault';
 import TransactionLedger from './pages/TransactionLedger';
 import DestinyMode from './pages/DestinyMode';
 import Onboarding from './pages/Onboarding';
+import LandingPage from './pages/LandingPage';
+import Login from './pages/Login';
+import TrialExpired from './pages/TrialExpired';
 import { Menu, X } from 'lucide-react';
 
 function App() {
+  const [view, setView] = useState('landing'); // landing, signup, login, dashboard, expired
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isOnboarded, setIsOnboarded] = useState(false); // New user state
+  const [user, setUser] = useState(null);
+
+  // Check trial status whenever user changes or view changes to dashboard
+  useEffect(() => {
+    if (user && view === 'dashboard') {
+      const trialDays = 7;
+      const signupDate = new Date(user.trialStartedAt || Date.now());
+      const now = new Date();
+      const diffTime = Math.abs(now - signupDate);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays > trialDays && !user.isPaid) {
+        setView('expired');
+      }
+    }
+  }, [user, view]);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -39,9 +58,39 @@ function App() {
     setIsMobileMenuOpen(false); 
   };
 
-  if (!isOnboarded) {
-    return <Onboarding onComplete={() => setIsOnboarded(true)} />;
-  }
+  const startTrial = () => setView('signup');
+  const openLogin = () => setView('login');
+  
+  const handleSignupComplete = (userData) => {
+    setUser({
+      ...userData,
+      trialStartedAt: new Date().toISOString(),
+      isPaid: false
+    });
+    setView('dashboard');
+  };
+
+  const handleLogin = (credentials) => {
+    // For demo, we simulate a user who has already used their trial
+    const mockUser = {
+      email: credentials.email,
+      business_name: 'Demo Business',
+      trialStartedAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(), // 8 days ago
+      isPaid: false
+    };
+    setUser(mockUser);
+    setView('dashboard');
+  };
+
+  const handlePaymentSuccess = () => {
+    setUser(prev => ({ ...prev, isPaid: true }));
+    setView('dashboard');
+  };
+
+  if (view === 'landing') return <LandingPage onStartTrial={startTrial} onLogin={openLogin} />;
+  if (view === 'signup') return <Onboarding onComplete={handleSignupComplete} />;
+  if (view === 'login') return <Login onLogin={handleLogin} onBackToLanding={() => setView('landing')} />;
+  if (view === 'expired') return <TrialExpired onPaymentSuccess={handlePaymentSuccess} />;
 
   return (
     <div className="flex bg-pulse-dark min-h-screen text-pulse-text font-sans">
@@ -70,6 +119,17 @@ function App() {
       
       {/* MAIN COMMAND AREA */}
       <main className="flex-1 overflow-y-auto mt-16 lg:mt-0 pb-10">
+        <div className="p-4 lg:p-8 flex justify-between items-center border-b border-gray-800 mb-6 bg-pulse-dark/50 sticky top-0 z-30 backdrop-blur-md">
+           <div>
+              <h2 className="text-sm font-bold text-pulse-gold uppercase tracking-[0.2em]">Active Session</h2>
+              <p className="text-2xl font-black text-white">{user?.business_name || 'Executive Dashboard'}</p>
+           </div>
+           {!user?.isPaid && (
+             <div className="bg-pulse-gold/10 border border-pulse-gold/30 px-4 py-2 rounded-full">
+               <span className="text-pulse-gold text-xs font-bold uppercase tracking-widest animate-pulse">Trial Mode Active</span>
+             </div>
+           )}
+        </div>
         {renderContent()}
       </main>
     </div>

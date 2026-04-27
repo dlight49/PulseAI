@@ -152,6 +152,3 @@ const ConversationVault = () => {
 };
 
 export default ConversationVault;
-
-
-export default ConversationVault;

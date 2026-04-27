@@ -37,7 +37,7 @@ enum TransactionStatus {
 
 model Business {
   id                String       @id @default(uuid())
-  whatsappPhoneId   String       @unique
+  whatsappPhoneId   String?      @unique
   name              String
   type              BusinessType @default(SERVICE)
   location          String?
@@ -48,6 +48,8 @@ model Business {
   objectionPlaybook Json?        // Stores the negotiation logic (too_expensive, etc.)
   paymentConfig     Json?        // Encrypted credentials for Paystack/Flutterwave
   subscriptionActive Boolean     @default(true)
+  trialStartedAt    DateTime     @default(now())
+  isPaid            Boolean      @default(false)
   
   services          Service[]
   conversations     Conversation[]

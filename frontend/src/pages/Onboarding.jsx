@@ -127,7 +127,7 @@ const Onboarding = ({ onComplete }) => {
               Your digital workforce is connected. Let's program its DNA to start closing sales.
             </p>
             <button 
-              onClick={() => onComplete()}
+              onClick={() => onComplete(formData)}
               className="w-full bg-white text-pulse-dark font-black py-4 rounded-xl shadow-lg hover:scale-[1.02] active:scale-95 transition-all mt-8"
             >
               GO TO BRAIN ROOM

@@ -105,6 +105,27 @@ async def get_chat_history(business_id: str, contact_id: str, api_key: str = Dep
         for r in rows
     ]
 
+class StatusUpdate(BaseModel):
+    active: bool
+
+@app.post("/business/{business_id}/status")
+async def update_business_status(business_id: str, req: StatusUpdate, api_key: str = Depends(verify_api_key)):
+    """
+    Toggles the 'subscriptionActive' flag for a business.
+    This is the 'Kill Switch' that pauses the AI immediately.
+    """
+    conn = db.get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute('UPDATE businesses SET "subscriptionActive" = %s WHERE id = %s', (req.active, business_id))
+        conn.commit()
+        return {"status": "success", "active": req.active}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8001)

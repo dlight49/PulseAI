@@ -1,6 +1,7 @@
 import os
 import sys
 import uuid
+from datetime import datetime
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -23,6 +24,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+async def root():
+    return {"status": "Pulse AI Auth API is running", "version": "1.0.0"}
+
 class SignupRequest(BaseModel):
     business_name: str
     owner_email: str
@@ -39,13 +44,15 @@ async def signup_business(req: SignupRequest):
     
     try:
         cursor.execute('''
-            INSERT INTO businesses (id, name, persona_prompt, competitive_edge)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO businesses (id, name, persona_prompt, competitive_edge, "trialStartedAt", "isPaid")
+            VALUES (%s, %s, %s, %s, %s, %s)
         ''', (
             business_id, 
             req.business_name,
             "You are a Senior Sales Lead. Professional and persuasive.",
-            "Quality service guaranteed."
+            "Quality service guaranteed.",
+            datetime.now(),
+            False
         ))
         conn.commit()
         return {"status": "success", "business_id": business_id}
@@ -60,14 +67,16 @@ async def save_whatsapp_token(business_id: str, token: str, phone_id: str):
     """
     Saves the Meta Access Token after the handshake is complete.
     This makes the AI live for that specific business.
+    Tokens are encrypted-at-rest for security.
     """
+    encrypted_token = db.encrypt_token(token)
     conn = db.get_connection()
     cursor = conn.cursor()
     cursor.execute('''
         UPDATE businesses 
-        SET whatsapp_access_token = ?, whatsapp_phone_id = ?
-        WHERE id = ?
-    ''', (token, phone_id, business_id))
+        SET "whatsappAccessToken" = %s, "whatsappPhoneId" = %s
+        WHERE id = %s
+    ''', (encrypted_token, phone_id, business_id))
     conn.commit()
     conn.close()
     return {"status": "connected"}

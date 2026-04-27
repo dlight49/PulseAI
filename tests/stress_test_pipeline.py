@@ -42,42 +42,51 @@ async def simulate_incoming_message(client, sender_id, message_text):
     
     start_time = time.time()
     try:
-        response = await client.post("http://127.0.0.1:5001/webhook", json=payload)
+        response = await client.post("http://127.0.0.1:10001/webhook", json=payload)
         latency = (time.time() - start_time) * 1000
         return response.status_code, latency
     except Exception as e:
+        print(f"❌ Connection Error: {e}")
         return 500, 0
 
-async def run_stress_test(total_messages=100):
-    print(f"🔥 QA STRESS TEST: Simulating {total_messages} concurrent messages...")
+async def run_stress_test(total_messages=500):
+    batch_size = 100
+    print(f"🔥 QA STRESS TEST: Simulating {total_messages} messages in batches of {batch_size}...")
     print(f"Target: Pulse AI Webhook (FastAPI + Async Pipeline)")
     print("-" * 50)
 
-    async with httpx.AsyncClient() as client:
-        tasks = []
-        for i in range(total_messages):
-            sender = f"234800000{i:04d}"
-            tasks.append(simulate_incoming_message(client, sender, "Hi, I want to book a facial!"))
+    all_results = []
+    start_all = time.time()
+    
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        for b in range(0, total_messages, batch_size):
+            print(f"🚀 Sending batch {b//batch_size + 1}...")
+            tasks = []
+            for i in range(b, min(b + batch_size, total_messages)):
+                sender = f"234800000{i:04d}"
+                tasks.append(simulate_incoming_message(client, sender, "Hi, I want to book a facial!"))
+            
+            results = await asyncio.gather(*tasks)
+            all_results.extend(results)
+            await asyncio.sleep(0.5) # Real-world gap between message spikes
         
-        start_all = time.time()
-        results = await asyncio.gather(*tasks)
         total_duration = time.time() - start_all
         
         # Stats
-        success_count = sum(1 for status, lat in results if status == 200)
-        avg_latency = sum(lat for status, lat in results) / total_messages
+        success_count = sum(1 for status, lat in all_results if status == 200)
+        avg_latency = sum(lat for status, lat in all_results) / total_messages
         
         print(f"\n📊 RESULTS:")
         print(f"✅ Success Rate: {success_count}/{total_messages} ({(success_count/total_messages)*100}%)")
         print(f"⏱️ Avg Webhook Response Time: {avg_latency:.2f}ms")
-        print(f"🚀 Total Time for {total_messages} requests: {total_duration:.2f}s")
+        print(f"🚀 Total Duration: {total_duration:.2f}s")
         print(f"📈 Throughput: {total_messages/total_duration:.2f} messages/second")
         
         if success_count == total_messages:
             print("\n🌟 VERDICT: THE PIPELINE IS INDESTRUCTIBLE. 10k Scaling Ready.")
         else:
-            print("\n⚠️ VERDICT: SYSTEM BOTTLENECK DETECTED. Check logs.")
+            print(f"\n⚠️ VERDICT: SYSTEM BOTTLENECK DETECTED. Failed: {total_messages - success_count}")
 
 if __name__ == "__main__":
     # Note: Webhook must be running in another process
-    asyncio.run(run_stress_test(200)) # Starting with 200 to prove the concept
+    asyncio.run(run_stress_test(500))

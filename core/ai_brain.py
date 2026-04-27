@@ -50,7 +50,7 @@ def get_ai_response(customer_message: str, sender: str, business_id: str = "seni
         print(f"🧠 Brain Saver: History too long ({len(history)} msgs). Compressing context...")
         summary_prompt = f"Summarize this conversation concisely, focusing on customer needs, price negotiation, and current status: \n" + \
                          "\n".join([f"{m['role']}: {m['content']}" for m in history[:-5]])
-        summary_response = client.models.generate_content(model='gemini-2.5-flash', contents=summary_prompt)
+        summary_response = client.models.generate_content(model='models/gemini-flash-latest', contents=summary_prompt)
         db.update_contact_summary(contact_data['id'], summary_response.text)
         # Refresh contact data to get the new summary
         contact_data = db.get_or_create_contact(sender)
@@ -86,22 +86,33 @@ def get_ai_response(customer_message: str, sender: str, business_id: str = "seni
 
     system_prompt += """
     INTERNAL MONOLOGUE (MANDATORY):
-    - Tone Detection: Match their energy.
-    - Mirroring Strategy: Build trust.
+    - Tone Detection: Match their energy (Lekki Luxury vs. Mainland Hustle).
+    - Mirroring Strategy: Build trust fast.
     - Strategic Move: Handle objections or close the deal.
     - Outcome Prediction: Kill their biggest doubt before they say it.
+    
+    IMPORTANT: You are a REAL person. Do not use robotic bullet points. Do not start with "Welcome to...". 
+    Start like a human would on WhatsApp. Use "Hey", "Hi there", or just dive in. 
+    Use occasional Nigerian expressions where natural (e.g., "Abeg", "Oshey", or just "Lekki traffic is no joke").
     """
 
     try:
         history_str = "\n".join([f"{m['role'].upper()}: {m['content']}" for m in history])
         full_prompt = f"{system_prompt}\n\nCHAT HISTORY:\n{history_str}\n\nRESPONSE:"
         
-        model_name = 'gemini-2.5-flash'
+        model_name = 'models/gemini-flash-latest'
         response = client.models.generate_content(model=model_name, contents=full_prompt)
         raw_output = response.text
         
-        # Clean up Internal Monologue from the final reply
-        reply = raw_output.split("RESPONSE:")[-1].strip() if "RESPONSE:" in raw_output else raw_output.strip()
+        # 🛡️ STRICT CLEANUP: Remove Internal Monologue and strategy talk
+        # We only want what comes AFTER the last three stars or "RESPONSE:"
+        if "***" in raw_output:
+            reply = raw_output.split("***")[-1].strip()
+        elif "RESPONSE:" in raw_output:
+            reply = raw_output.split("RESPONSE:")[-1].strip()
+        else:
+            # If AI ignores format, we strip the Monologue header manually
+            reply = re.sub(r"(?i)INTERNAL MONOLOGUE:.*?\n\n", "", raw_output, flags=re.DOTALL).strip()
 
         # Business Logic: Auto-append payment link if intent is high
         if not is_personal_proxy and ("pay" in reply.lower() or "book" in reply.lower() or "link" in reply.lower()):

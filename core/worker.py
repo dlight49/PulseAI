@@ -12,6 +12,7 @@ project_root = os.path.dirname(script_dir)
 if project_root not in sys.path:
     sys.path.append(project_root)
 
+import core.db_manager as db
 from core.ai_brain import get_ai_response
 
 load_dotenv(dotenv_path=os.path.join(project_root, "config", ".env"))
@@ -21,24 +22,39 @@ load_dotenv(dotenv_path=os.path.join(project_root, "config", ".env"))
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 celery_app = Celery("pulse_ai_workers", broker=REDIS_URL)
 
-WHATSAPP_TOKEN = os.getenv("WHATSAPP_ACCESS_TOKEN")
-
 @celery_app.task(name="process_whatsapp_message")
 def process_whatsapp_message(sender: str, message_text: str, business_id: str, phone_number_id: str):
     """
     This is the Worker Task. 
     It runs in a separate process/container.
-    If the Webhook crashes, this worker keeps going.
+    Enables multi-tenancy by using decrypted business-specific tokens.
     """
     print(f"📦 Worker: Processing queued message for {sender}...")
     
-    # 1. Get the High-Level AI Reply
+    # 1. Resolve Business for Token
+    business = db.get_business(business_id)
+    if not business or not business.get('whatsappAccessToken'):
+        print(f"❌ Worker Error: No token found for business {business_id}")
+        return
+
+    # THE KILL SWITCH CHECK
+    if not business.get('subscriptionActive', True):
+        print(f"🚦 Worker: Business {business['name']} has paused their AI. Task aborted.")
+        return
+
+    try:
+        whatsapp_token = db.decrypt_token(business['whatsappAccessToken'])
+    except Exception as e:
+        print(f"❌ Worker Error: Decryption failed: {e}")
+        return
+
+    # 2. Get the High-Level AI Reply
     reply = get_ai_response(message_text, sender, business_id)
     
-    # 2. Send back to WhatsApp
+    # 3. Send back to WhatsApp
     url = f"https://graph.facebook.com/v18.0/{phone_number_id}/messages"
     headers = {
-        "Authorization": f"Bearer {WHATSAPP_TOKEN}",
+        "Authorization": f"Bearer {whatsapp_token}",
         "Content-Type": "application/json"
     }
     payload = {

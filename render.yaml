@@ -1,19 +1,53 @@
 services:
-  # The Pulse AI All-in-One Executive Engine
-  # This runs on Render's FREE tier (No credit card needed)
+  # 1. THE BRAIN: Main FastAPI Webhook & API
   - type: web
-    name: pulse-ai-engine
-    env: python
+    name: pulse-ai-api
+    runtime: python
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn api.webhook_v2:app --host 0.0.0.0 --port $PORT
     envVars:
-      - key: DATABASE_URL
+      - key: PORT
+        value: 10000
+      - fromDatabase:
+          name: pulse-db
+          property: connectionString
+      - fromService:
+          type: redis
+          name: pulse-redis
+          property: connectionString
+      - key: FERNET_MASTER_KEY
+        sync: false # Set this manually in Render Dashboard for safety
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: META_VERIFY_TOKEN
+        value: pulse_ai_secure_token
+
+  # 2. THE MUSCLES: Celery Background Worker
+  - type: worker
+    name: pulse-ai-worker
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: celery -A core.worker worker --loglevel=info
+    envVars:
+      - fromDatabase:
+          name: pulse-db
+          property: connectionString
+      - fromService:
+          type: redis
+          name: pulse-redis
+          property: connectionString
+      - key: FERNET_MASTER_KEY
         sync: false
       - key: GEMINI_API_KEY
         sync: false
-      - key: WHATSAPP_ACCESS_TOKEN
-        sync: false
-      - key: ADMIN_API_KEY
-        sync: false
-      - key: META_VERIFY_TOKEN
-        sync: false
+
+# 3. THE DATA CORE: PostgreSQL
+databases:
+  - name: pulse-db
+    plan: free
+
+# 4. THE DELIVERY VAN: Redis for Celery
+redis:
+  - name: pulse-redis
+    plan: free
+    ipAllowList: [] # Only allow internal connections

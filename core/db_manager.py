@@ -5,6 +5,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from datetime import datetime
 from dotenv import load_dotenv
+from cryptography.fernet import Fernet
 
 # Path safety
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -13,6 +14,22 @@ load_dotenv(dotenv_path=os.path.join(project_root, "config", ".env"))
 
 # PRODUCTION DATABASE URL (Neon)
 DB_URL = os.getenv("DATABASE_URL")
+MASTER_KEY = os.getenv("FERNET_MASTER_KEY")
+
+def get_fernet():
+    if not MASTER_KEY:
+        raise Exception("❌ SECURITY ERROR: FERNET_MASTER_KEY not set!")
+    return Fernet(MASTER_KEY.encode())
+
+def encrypt_token(token: str) -> str:
+    """Encrypts a string (e.g. WhatsApp Access Token) for database storage."""
+    f = get_fernet()
+    return f.encrypt(token.encode()).decode()
+
+def decrypt_token(encrypted_token: str) -> str:
+    """Decrypts a token retrieved from the database."""
+    f = get_fernet()
+    return f.decrypt(encrypted_token.encode()).decode()
 
 def get_connection():
     """Returns a connection to the Production PostgreSQL database."""
@@ -37,8 +54,18 @@ def get_business(business_id):
         services = cursor.fetchall()
         business['services'] = services
         
-        # Objection playbook is already a dict in PG (JSONB)
         return dict(business)
+    finally:
+        conn.close()
+
+def get_business_by_phone_id(phone_id):
+    """Resolves a business using the Meta WhatsApp Phone Number ID."""
+    conn = get_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        cursor.execute("SELECT * FROM businesses WHERE \"whatsappPhoneId\" = %s", (phone_id,))
+        business = cursor.fetchone()
+        return dict(business) if business else None
     finally:
         conn.close()
 
